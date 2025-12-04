@@ -4,7 +4,7 @@ import pytest
 import json
 
 
-from markitdown import StreamInfo
+from markitdown import DocumentConverterResult, StreamInfo
 from markitdown.converters._ipynb_converter import (
     IpynbConverter,
     CANDIDATE_MIME_TYPE_PREFIXES,
@@ -12,7 +12,7 @@ from markitdown.converters._ipynb_converter import (
 )
 
 TEST_FILES_DIR = os.path.join(os.path.dirname(__file__), "test_files")
-IPYNB_TEST_FILE = os.path.join(TEST_FILES_DIR, "test.ipynb")
+IPYNB_TEST_FILE = os.path.join(TEST_FILES_DIR, "test_notebook.ipynb")
 
 
 class TestIpynbConverterAccepts:
@@ -78,8 +78,21 @@ class TestIpynbConverterConvert:
         result = converter.convert(io.BytesIO(data), stream_info)
 
         text = getattr(result, "markdown", None) 
-
         assert "# Hello Notebook" in text
+
+    def test_convert_real_notebook_file(self):
+        converter = IpynbConverter()
+        stream_info = StreamInfo(extension=".ipynb", filename="test_notebook.ipynb")
+
+        with open(IPYNB_TEST_FILE, "rb") as f:
+            notebook_bytes = f.read()
+
+        result = converter.convert(io.BytesIO(notebook_bytes), stream_info)
+
+        assert isinstance(result, DocumentConverterResult)
+        text = result.text_content
+        assert isinstance(text, str)
+        assert text.strip() != ""
 
 
 class TestIpynbConverterConstants:

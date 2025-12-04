@@ -52,7 +52,26 @@ class TestPlainTextConverterAccepts:
         assert converter.accepts(io.BytesIO(), stream_info) is False
 
 
+class TestPlainTextConverterConvert:
+    def test_convert_from_bytes_stream(self):
+        converter = PlainTextConverter()
+        stream = io.BytesIO(b"Hello its Lucian\nStill Lucian")
+        stream_info = StreamInfo(extension=".txt", filename="exampleTest.txt")
+        result = converter.convert(stream, stream_info)
+        assert isinstance(result, DocumentConverterResult)
+        assert "Hello its Lucian" in result.text_content
+        assert "Still Lucian" in result.text_content
 
+    def test_convert_real_text_file(self):
+        converter = PlainTextConverter()
+        stream_info = StreamInfo(extension=".txt", filename="test.txt")
+
+        with open(TEXT_TEST_FILE, "rb") as f:
+            stream = io.BytesIO(f.read())
+
+        result = converter.convert(stream, stream_info)
+        assert isinstance(result, DocumentConverterResult)
+        assert isinstance(result.text_content, str)
 
 
 

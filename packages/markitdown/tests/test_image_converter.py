@@ -1,5 +1,6 @@
+import base64
 import io
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 import pytest
 
@@ -106,3 +107,64 @@ class TestImageConverter():
         assert isinstance(result, DocumentConverterResult)
         # Only metadata should appear
         assert result.markdown.strip() == "Title: Test Image"
+
+    @pytest.mark.parametrize(
+        "mimetype, extension, prompt, file_bytes, llm_return_text, expect_none",
+        [
+            ("image/jpeg", ".jpg", "A custom prompt", b"abc123", "LLM DESC", False),
+            ("image/jpeg", ".jpg", None, b"xyz789", "GENERIC DESC", False),
+            (None, ".png", "Hello", b"filedata", "PNG DESC", False),
+            ("image/jpeg", ".jpg", "Bad", None, None, True),
+            ("", "", None, b"abc123", None, False)
+        ]
+    )
+    @patch("markitdown._stream_info.StreamInfo")
+    def test_get_llm_description(
+            self, stream_info, mimetype, extension, prompt, file_bytes, llm_return_text, expect_none
+    ):
+        converter = ImageConverter()
+
+        stream_info.mimetype = mimetype
+        stream_info.extension = extension
+
+        # Case 4: Make file read fail (simulate unreadable file)
+        if file_bytes is None:
+            file_stream = Mock()
+            file_stream.read.side_effect = Exception("bad read")
+        else:
+            file_stream = io.BytesIO(file_bytes)
+
+        # Mock LLM client
+        mock_client = Mock()
+        mock_client.chat.completions.create.return_value = Mock(
+            choices=[Mock(message=Mock(content=llm_return_text))]
+        )
+
+        # Call the method
+        result = converter._get_llm_description(
+            file_stream,
+            stream_info,
+            client=mock_client,
+            model="fake-model",
+            prompt=prompt,
+        )
+
+        # Expectations
+        if expect_none:
+            assert result is None
+        else:
+            assert result == llm_return_text
+
+            # Ensure the LLM was actually called
+            mock_client.chat.completions.create.assert_called_once()
+
+            # Validate data URI was constructed correctly
+            encoded = base64.b64encode(file_bytes).decode("utf-8")
+            called_messages = mock_client.chat.completions.create.call_args[1]["messages"]
+            data_uri = called_messages[0]["content"][1]["image_url"]["url"]
+            assert encoded in data_uri
+            assert data_uri.startswith("data:")
+
+        # Ensure file pointer is restored
+        if file_bytes is not None:
+            assert file_stream.tell() == 0

@@ -15,8 +15,8 @@ class TestImageConverter():
 
     @pytest.mark.parametrize("extension, mimetype, expected_output", [
         pytest.param(".jpg", "invalid", True, id=".jpg_extension_case"),
-        pytest.param(".docx", "image/jpeg", True, id=".jpeg_extension_case"),
-        pytest.param(".docx", "docx", False, id=".docx_extension_case")
+        pytest.param(".docx", "image/jpeg", True, id=".docx_extension_case"),
+        pytest.param(".docx", "docx", False, id=".invalid_extension_and_mimetype_case")
     ])
     @patch("markitdown._stream_info.StreamInfo")
     def test_accepts(self, stream_info, extension, mimetype, expected_output):

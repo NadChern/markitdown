@@ -1,6 +1,5 @@
 import io
 import unittest
-from distutils import extension
 from unittest.mock import patch, MagicMock
 
 import pytest

@@ -21,20 +21,33 @@ class _CustomMarkdownify(markdownify.MarkdownConverter):
         # Explicitly cast options to the expected type if necessary
         super().__init__(**options)
 
-    def convert_hn(
+    def convert_hN(
         self,
         n: int,
         el: Any,
         text: str,
-        convert_as_inline: Optional[bool] = False,
-        **kwargs,
+        parent_tags: Any = None,
     ) -> str:
         """Same as usual, but be sure to start with a new line"""
-        if not convert_as_inline:
-            if not re.search(r"^\n", text):
-                return "\n" + super().convert_hn(n, el, text, convert_as_inline)  # type: ignore
+        # Get the parent's conversion result
+        result = super().convert_hN(n, el, text, parent_tags)  # type: ignore
 
-        return super().convert_hn(n, el, text, convert_as_inline)  # type: ignore
+        # Check if this is an inline heading based on parent tags
+        convert_as_inline = parent_tags and any(tag in ['p', 'span', 'a'] for tag in parent_tags) if isinstance(parent_tags, list) else False
+
+        if convert_as_inline:
+            # For inline headings, remove all leading newlines
+            return result.lstrip('\n')
+        else:
+            # For block headings, ensure exactly one leading newline
+            # Strip existing leading newlines and add exactly one
+            stripped = result.lstrip('\n')
+            # Only add leading newline if the original text didn't start with one
+            if not re.search(r"^\n", text):
+                return "\n" + stripped
+            else:
+                # Text already had a leading newline, don't add another
+                return stripped
 
     def convert_a(
         self,

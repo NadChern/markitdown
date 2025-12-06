@@ -71,7 +71,7 @@ def test_fallback_to_which(monkeypatch, tmp_path):
             return "/usr/bin/exiftool"
         return None
 
-    monkeypatch.setattr("markitdown.converters._exiftool.shutil.which", which, raising=True)
+    monkeypatch.setattr("markitdown._markitdown.shutil.which", which, raising=True)
 
     MarkItDown().convert(str(img))
 

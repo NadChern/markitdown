@@ -14,7 +14,8 @@ class TestDocxConverter:
         self.converter = docx_converter.DocxConverter()
 
     def test_mammoth_files_open(self=None):
-        result = docx_converter.mammoth_files_open(self, "dummy_uri")
+        with pytest.warns(UserWarning, match="DOCX: processing of r:link resources"):
+            result = docx_converter.mammoth_files_open(self, "dummy_uri")
         assert isinstance(result, io.BytesIO)
         assert result.getvalue() == b""
 
@@ -93,4 +94,7 @@ class TestDocxConverter:
 
             with pytest.raises(_docx_converter.MissingDependencyException) as exc:
                 self.converter.convert(io.BytesIO(b"dummy"), stream_info)
+
+        # Restore the module to its original state by reloading with mammoth available
+        importlib.reload(_docx_converter)
 

@@ -13,20 +13,20 @@ def test_heading_style_atx():
 
 def test_block_heading_adds_single_leading_newline():
     conv = _CustomMarkdownify()
-    text = conv.convert_hn(1, SimpleNamespace(), "Heading", convert_as_inline=False)
+    text = conv.convert_hN(1, SimpleNamespace(), "Heading", parent_tags=[])
     assert text.startswith("\n")
     assert not text.startswith("\n\n")
 
 
 def test_block_heading_does_not_double_preexisting_newline():
     conv = _CustomMarkdownify()
-    text = conv.convert_hn(1, SimpleNamespace(), "\nHeading", convert_as_inline=False)
+    text = conv.convert_hN(1, SimpleNamespace(), "\nHeading", parent_tags=[])
     assert not text.startswith("\n\n")
 
 
 def test_inline_heading_has_no_leading_newline():
     conv = _CustomMarkdownify()
-    text = conv.convert_hn(1, SimpleNamespace(), "Heading", convert_as_inline=True)
+    text = conv.convert_hN(1, SimpleNamespace(), "Heading", parent_tags=['p'])
     assert not text.startswith("\n")
 
 
@@ -121,7 +121,7 @@ def test_data_uri_image_is_truncated():
     img = soup.find("img")
     conv = _CustomMarkdownify()
     out = conv.convert_img(img, "")
-    assert out == "![pic](data:image/png;base64,...)"
+    assert out == "![pic](data:image/png;base64...)"
 
 
 def test_convert_handles_simple_html_snippet():
